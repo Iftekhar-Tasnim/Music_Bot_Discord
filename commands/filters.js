@@ -1,0 +1,27 @@
+const { EmbedBuilder } = require('discord.js');
+
+module.exports = {
+    name: 'filters',
+    aliases: ['filter', 'effects'],
+    description: 'Apply audio filters to the music',
+    usage: 'filters <filter_name> or filters list',
+    async execute(message, args, client) {
+        const queue = client.queues.get(message.guild.id);
+        
+        if (!queue) {
+            const embed = new EmbedBuilder()
+                .setColor('#FF0000')
+                .setDescription('❌ There is no music queue for this server!');
+            return message.reply({ embeds: [embed] });
+        }
+        
+        // Check if user is in the same voice channel
+        const voiceChannel = message.member.voice.channel;
+        if (!voiceChannel || voiceChannel.id !== queue.connection.joinConfig.channelId) {
+            const embed = new EmbedBuilder()
+                .setColor('#FF0000')
+                .setDescription('❌ You need to be in the same voice channel as the bot!');
+            return message.reply({ embeds: [embed] });
+        }
+        
+        const availableFilters = {\n            'bassboost': '🎵 Bass Boost - Enhances bass frequencies',\n            'nightcore': '🌙 Nightcore - Higher pitch and faster tempo',\n            'vaporwave': '🌊 Vaporwave - Slower tempo and lower pitch',\n            'clear': '🔄 Clear - Remove all filters'\n        };\n        \n        if (!args[0] || args[0].toLowerCase() === 'list') {\n            const embed = new EmbedBuilder()\n                .setColor('#0099FF')\n                .setTitle('🎛️ Available Audio Filters')\n                .setDescription('**Note:** These are simulated filters using basic audio adjustments. For advanced audio processing, consider using specialized bots.')\n                .addFields(\n                    Object.entries(availableFilters).map(([key, desc]) => ({\n                        name: key,\n                        value: desc,\n                        inline: true\n                    }))\n                )\n                .addFields({ \n                    name: 'Usage', \n                    value: `\\`${message.prefix || '!'}filters <filter_name>\\``,\n                    inline: false \n                });\n            \n            return message.reply({ embeds: [embed] });\n        }\n        \n        const filterName = args[0].toLowerCase();\n        \n        if (!availableFilters[filterName]) {\n            const embed = new EmbedBuilder()\n                .setColor('#FF0000')\n                .setDescription(`❌ Unknown filter: **${filterName}**\\nUse \\`${message.prefix || '!'}filters list\\` to see available filters.`);\n            return message.reply({ embeds: [embed] });\n        }\n        \n        // Initialize filters object if not exists\n        if (!queue.filters) {\n            queue.filters = {\n                bassboost: false,\n                nightcore: false,\n                vaporwave: false\n            };\n            queue.originalVolume = queue.volume;\n        }\n        \n        // Apply filter effects\n        let description = '';\n        \n        switch (filterName) {\n            case 'bassboost':\n                queue.filters.bassboost = !queue.filters.bassboost;\n                if (queue.filters.bassboost) {\n                    queue.setVolume(Math.min(100, queue.volume + 20));\n                    description = '🎵 Bass boost **enabled**';\n                } else {\n                    queue.setVolume(queue.originalVolume || 50);\n                    description = '🎵 Bass boost **disabled**';\n                }\n                break;\n                \n            case 'nightcore':\n                queue.filters.nightcore = !queue.filters.nightcore;\n                description = `🌙 Nightcore **${queue.filters.nightcore ? 'enabled' : 'disabled'}**`;\n                if (queue.filters.nightcore) {\n                    description += '\\n*Note: Restart the current song to apply the effect*';\n                }\n                break;\n                \n            case 'vaporwave':\n                queue.filters.vaporwave = !queue.filters.vaporwave;\n                description = `🌊 Vaporwave **${queue.filters.vaporwave ? 'enabled' : 'disabled'}**`;\n                if (queue.filters.vaporwave) {\n                    description += '\\n*Note: Restart the current song to apply the effect*';\n                }\n                break;\n                \n            case 'clear':\n                queue.filters = {\n                    bassboost: false,\n                    nightcore: false,\n                    vaporwave: false\n                };\n                queue.setVolume(queue.originalVolume || 50);\n                description = '🔄 All filters **cleared**';\n                break;\n        }\n        \n        const embed = new EmbedBuilder()\n            .setColor('#00FF00')\n            .setTitle('🎛️ Audio Filter')\n            .setDescription(description)\n            .addFields({\n                name: 'Active Filters',\n                value: Object.entries(queue.filters)\n                    .filter(([key, value]) => value)\n                    .map(([key]) => `• ${key}`)\n                    .join('\\n') || 'None',\n                inline: true\n            }, {\n                name: 'Current Volume',\n                value: `${queue.volume}%`,\n                inline: true\n            });\n        \n        message.reply({ embeds: [embed] });\n    }\n};
