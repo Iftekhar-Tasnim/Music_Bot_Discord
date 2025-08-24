@@ -58,9 +58,23 @@ module.exports = {
                 // Direct YouTube URL
                 songInfo = await getVideoInfo(query);
             } else {
-                // Search YouTube
-                const searchResults = await searchYouTube(query, 1);
-                songInfo = searchResults[0];
+                // Try to search, but provide helpful error if it fails
+                try {
+                    const searchResults = await searchYouTube(query, 1);
+                    songInfo = searchResults[0];
+                } catch (searchError) {
+                    const errorEmbed = new EmbedBuilder()
+                        .setColor('#FFA500')
+                        .setTitle('⚠️ Search Not Available')
+                        .setDescription('Search functionality is currently limited. Please provide a direct YouTube URL.')
+                        .addFields({ 
+                            name: 'Example', 
+                            value: '`!play https://youtube.com/watch?v=dQw4w9WgXcQ`' 
+                        });
+                    
+                    await searchMessage.edit({ embeds: [errorEmbed] });
+                    return;
+                }
             }
             
             // Add user info

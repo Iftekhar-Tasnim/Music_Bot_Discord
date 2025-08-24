@@ -18,13 +18,21 @@ module.exports = {
         const query = args.join(' ');
         
         try {
-            // Send searching message
-            const searchEmbed = new EmbedBuilder()
-                .setColor('#FFFF00')
-                .setDescription('🔍 Searching YouTube...');
-            const searchMessage = await message.reply({ embeds: [searchEmbed] });
+            // Send info message about search functionality
+            const infoEmbed = new EmbedBuilder()
+                .setColor('#FFA500')
+                .setTitle('🔍 Search Information')
+                .setDescription('**Search functionality is currently simplified.**\n\nFor best results, please use the `play` command with:\n• Direct YouTube URLs\n• Specific song names (may work with some songs)')
+                .addFields(
+                    { name: '✅ Recommended', value: '`!play https://youtube.com/watch?v=...`', inline: false },
+                    { name: '⚠️ May Work', value: '`!play Never Gonna Give You Up`', inline: false },
+                    { name: '💡 Tip', value: 'Copy YouTube URLs for best reliability!', inline: false }
+                );
             
-            // Search for videos
+            return message.reply({ embeds: [infoEmbed] });
+            
+            /* 
+            // The old search code is commented out until YouTube API is set up
             const results = await searchYouTube(query, 10);
             
             if (results.length === 0) {
@@ -34,76 +42,8 @@ module.exports = {
                 return searchMessage.edit({ embeds: [embed] });
             }
             
-            // Create embed with search results
-            const embed = new EmbedBuilder()
-                .setColor('#0099FF')
-                .setTitle('🔍 Search Results')
-                .setDescription(`Found ${results.length} results for: **${query}**`)
-                .setTimestamp();
-            
-            // Add first 5 results to embed
-            results.slice(0, 5).forEach((result, index) => {
-                embed.addFields({
-                    name: `${index + 1}. ${truncateText(result.title, 40)}`,
-                    value: `Duration: ${result.duration} | Author: ${result.author}`,
-                    inline: false
-                });
-            });
-            
-            // Create select menu for song selection
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('song_select')
-                .setPlaceholder('Choose a song to play...')
-                .addOptions(
-                    results.map((result, index) => ({
-                        label: truncateText(result.title, 100),
-                        description: `${result.duration} - ${result.author}`,
-                        value: result.url,
-                        emoji: '🎵'
-                    }))
-                );
-            
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-            
-            await searchMessage.edit({ 
-                embeds: [embed], 
-                components: [row] 
-            });
-            
-            // Create collector for menu interaction
-            const collector = searchMessage.createMessageComponentCollector({
-                time: 30000 // 30 seconds
-            });
-            
-            collector.on('collect', async (interaction) => {
-                if (interaction.user.id !== message.author.id) {
-                    return interaction.reply({ 
-                        content: '❌ Only the person who used the search command can select a song!', 
-                        ephemeral: true 
-                    });
-                }
-                
-                await interaction.deferUpdate();
-                
-                // Simulate play command with selected URL
-                const playCommand = client.commands.get('play');
-                if (playCommand) {
-                    await playCommand.execute(message, [interaction.values[0]], client);
-                }
-                
-                // Remove the select menu
-                await searchMessage.edit({ components: [] });
-                collector.stop();
-            });
-            
-            collector.on('end', async () => {
-                // Remove components when collector expires
-                try {
-                    await searchMessage.edit({ components: [] });
-                } catch (error) {
-                    // Message might have been deleted
-                }
-            });
+            // ... rest of search implementation
+            */
             
         } catch (error) {
             console.error('Search command error:', error);

@@ -1,6 +1,6 @@
 const { createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
 const { EventEmitter } = require('events');
-const ytdl = require('@distube/ytdl-core');
+const ytdl = require('ytdl-core');
 const config = require('../config');
 
 class MusicQueue extends EventEmitter {

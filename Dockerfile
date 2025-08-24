@@ -1,4 +1,4 @@
-# Use Node.js 18 LTS (not Alpine to avoid compilation issues)
+# Use Node.js 18 LTS (not Alpine to avoid compilation issues)  
 FROM node:18-slim
 
 # Install system dependencies for audio processing
