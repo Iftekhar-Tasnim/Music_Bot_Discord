@@ -1,5 +1,5 @@
-const ytdl = require('ytdl-core');
-const ytsr = require('ytsr');
+const ytdl = require('@distube/ytdl-core');
+const { search } = require('play-dl');
 
 /**
  * Validates if a URL is a valid YouTube URL
@@ -48,20 +48,19 @@ async function getVideoInfo(url) {
  */
 async function searchYouTube(query, limit = 1) {
     try {
-        const searchResults = await ytsr(query, { limit });
-        const videos = searchResults.items.filter(item => item.type === 'video');
+        const searchResults = await search(query, { limit, source: { youtube: 'video' } });
         
-        if (videos.length === 0) {
+        if (!searchResults || searchResults.length === 0) {
             throw new Error('No videos found for this search query.');
         }
         
-        return videos.slice(0, limit).map(video => ({
+        return searchResults.slice(0, limit).map(video => ({
             title: video.title,
             url: video.url,
-            duration: video.duration,
-            durationSeconds: parseDuration(video.duration),
-            thumbnail: video.bestThumbnail?.url,
-            author: video.author?.name,
+            duration: formatDuration(video.durationInSec || 0),
+            durationSeconds: video.durationInSec || 0,
+            thumbnail: video.thumbnails?.[0]?.url,
+            author: video.channel?.name,
             views: video.views,
             requestedBy: null
         }));
